@@ -17,6 +17,8 @@
 package com.hazelcast.spi.impl;
 
 import com.hazelcast.logging.ILogger;
+import com.hazelcast.map.MapService;
+import com.hazelcast.map.operation.PartitionWideEntryWithPredicateOperationFactory;
 import com.hazelcast.nio.ObjectDataInput;
 import com.hazelcast.nio.ObjectDataOutput;
 import com.hazelcast.nio.serialization.IdentifiedDataSerializable;
@@ -45,6 +47,10 @@ public final class PartitionIteratingOperation extends AbstractOperation impleme
         final NodeEngine nodeEngine = getNodeEngine();
         results = new HashMap<Integer, Object>(partitions.size());
         try {
+            if(operationFactory instanceof PartitionWideEntryWithPredicateOperationFactory) {
+                MapService mapService = getService();
+                ((PartitionWideEntryWithPredicateOperationFactory)operationFactory).queryIndex(mapService);
+            }
             Map<Integer, ResponseQueue> responses = new HashMap<Integer, ResponseQueue>(partitions.size());
             for (final int partitionId : partitions) {
                 ResponseQueue responseQueue = new ResponseQueue();

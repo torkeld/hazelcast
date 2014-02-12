@@ -88,7 +88,7 @@ public class MultipleEntryOperation extends AbstractMapOperation implements Back
             }
 
             if (eventType != __NO_NEED_TO_FIRE_EVENT) {
-                mapService.publishEvent(getCallerAddress(), name, eventType, key, (Data)mapEntry.getValue(), dataValue);
+                mapService.publishEvent(getCallerAddress(), name, eventType, key, mapService.toData(mapEntry.getValue()), dataValue);
                 if (mapContainer.isNearCacheEnabled()
                         && mapContainer.getMapConfig().getNearCacheConfig().isInvalidateOnChange()) {
                     mapService.invalidateAllNearCaches(name, key);

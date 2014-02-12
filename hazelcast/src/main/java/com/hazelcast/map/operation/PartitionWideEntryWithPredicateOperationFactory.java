@@ -17,13 +17,20 @@
 package com.hazelcast.map.operation;
 
 import com.hazelcast.map.EntryProcessor;
+import com.hazelcast.map.MapService;
 import com.hazelcast.nio.ObjectDataInput;
 import com.hazelcast.nio.ObjectDataOutput;
+import com.hazelcast.nio.serialization.Data;
 import com.hazelcast.query.Predicate;
+import com.hazelcast.query.impl.IndexService;
+import com.hazelcast.query.impl.QueryableEntry;
 import com.hazelcast.spi.Operation;
 import com.hazelcast.spi.OperationFactory;
 
 import java.io.IOException;
+import java.util.AbstractMap;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * date: 9/16/13
@@ -33,6 +40,8 @@ public class PartitionWideEntryWithPredicateOperationFactory implements Operatio
     private String name;
     private EntryProcessor entryProcessor;
     private Predicate predicate;
+    private boolean hasIndex;
+    private Set<Data> keySet;
 
     public PartitionWideEntryWithPredicateOperationFactory() {
     }
@@ -45,7 +54,23 @@ public class PartitionWideEntryWithPredicateOperationFactory implements Operatio
 
     @Override
     public Operation createOperation() {
+        if(hasIndex) {
+            return new MultipleEntryOperation(name, keySet, entryProcessor);
+        }
         return new PartitionWideEntryWithPredicateOperation(name, entryProcessor, predicate);
+    }
+    
+    public void queryIndex(MapService mapService) {
+        IndexService indexService = mapService.getMapContainer(name).getIndexService();
+        Set<QueryableEntry> querySet = indexService.query(predicate);
+        if (querySet != null) {
+            Set<Data> keys = new HashSet<Data>();
+            for(QueryableEntry e: querySet) {
+                keys.add(e.getKeyData());
+            }
+            hasIndex = true;
+            keySet = keys;
+        }
     }
 
     @Override
